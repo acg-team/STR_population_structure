@@ -41,19 +41,12 @@ Columns should include:
 
 ## 2. Key Components of the Pipeline
 
-All core analysis scripts are located in the `scripts/` directory. The pipeline includes:
-
-- STR matrix construction and filtering
-- Cross-dataset STR overlap and batch-effect filtering
-- Population structure analysis (PCA, unsupervised clustering)
-- Supervised population assignment (Random Forest, Naive Bayes)
-- Directional NMF for STR-based admixture inference
-- Characterization of ancestry-informative STR signatures2. STR Matrices and Overlap Between Datasets
+All core analysis scripts are located in the `scripts/` directory. 
 
 ### STR Matrices and Overlap Between Datasets
 
 #### STR Matrix Construction
-
+`preprocess_vcfs.py`
 Scripts convert EnsembleTR or HipSTR VCFs into per-chromosome and genome-wide STR matrices.
 
 Main steps:
@@ -65,7 +58,7 @@ Main steps:
   - `str_matrix.tsv` (samples × STR loci)
 
 #### Cross-dataset STR Harmonization
-
+`integrate_cohorts.py`
 Used when merging data from 1KGP, HGDP, SGDP, and H3Africa.
 
 Steps:
@@ -77,8 +70,8 @@ Steps:
 This enables joint population structure analyses.
 
 ### Population Structure Analysis (STR vs SNP)
-
-This provides a direct comparison of population structure resolution between STRs and SNPs.
+`unsupervised_clustering.py`, `genetic_distances.py`, `geo_distances.py`
+These provide a direct comparison of population structure resolution between STRs and SNPs.
 
 Features:
 - PCA-based dimensionality reduction
@@ -90,7 +83,7 @@ Features:
 - comparison of STR/SNP distances to geographic distances using Mantel tests
 
 ### Supervised Population Assignment (STR vs SNP)
-
+`supervised_assignment.py`
 Two classifiers are implemented:
 - Random Forest
 - Naive Bayes
@@ -99,7 +92,7 @@ Outputs include accuracy metrics at both continental and regional levels for STR
 
 
 ### Directional NMF for STR-based Admixture Inference
-
+`dNMF.py`
 The model assumes ancestral components are encoded jointly in STR expansions and contractions.
 
 Input:
@@ -120,18 +113,18 @@ Using dNMF, we detected:
 
 
 ### Ancestry-informative STR Signatures Analysis
-
+`STR_signatures.py`
 - Identify top STR loci per direction per component 
 - Define direction-specific STR signatures
 - Perform enrichment tests for STR motif lengths and genomic regions
 
 ## 3. Notebooks
 
-This repository includes Jupyter notebooks for visualizations in the `notebooks/` and `R_scripts/` directory.
+This repository includes Jupyter notebooks and R scripts for generating figures in the `notebooks/` and `R_scripts/` directory.
 
 ## 4. Dependencies
 
-- Python 3.8 or newer
+- Python 3.10 or newer
 - numpy
 - pandas
 - scipy
