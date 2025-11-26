@@ -41,7 +41,7 @@ Columns should include:
 
 ## 2. Key Components of the Pipeline
 
-All core analysis scripts are located in `scripts/`. The pipeline includes:
+All core analysis scripts are located in the `scripts/` directory. The pipeline includes:
 
 - STR matrix construction and filtering
 - Cross-dataset STR overlap and batch-effect filtering
@@ -100,10 +100,6 @@ Outputs include accuracy metrics at both continental and regional levels for STR
 
 ### Directional NMF for STR-based Admixture Inference
 
-Directional NMF (dNMF) decomposes standardized STR data into:
-- expansion-associated signals (`X_pos`)
-- contraction-associated signals (`X_neg`)
-
 The model assumes ancestral components are encoded jointly in STR expansions and contractions.
 
 Input:
@@ -111,11 +107,11 @@ Input:
 
 Output:
 - Ancestry coefficient matrices
-- Ancestry-informative STR signatures
+- STR contribution matrices 
 
 Using dNMF, we detected:
-- 12 ancestral components in 1KGP  
-- 11 ancestral components in HGDP+SGDP  
+- K = 12 ancestral components in 1KGP  
+- K = 11 ancestral components in HGDP+SGDP  
 
 
 <p align="center">
@@ -125,12 +121,9 @@ Using dNMF, we detected:
 
 ### Ancestry-informative STR Signatures Analysis
 
-- Identify top STRloci per direction per component 
+- Identify top STR loci per direction per component 
 - Define direction-specific STR signatures
-- Perform enrichment tests for:
-  - STR motif lengths
-  - Genomic regions
-
+- Perform enrichment tests for STR motif lengths and genomic regions
 
 ## 3. Notebooks
 
