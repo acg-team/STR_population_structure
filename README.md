@@ -38,7 +38,6 @@ Columns should include:
 - Continental population labels
 - Regional population labels
 
----
 
 ## 2. Key Components of the Pipeline
 
@@ -77,8 +76,6 @@ Steps:
 
 This enables joint population structure analyses.
 
----
-
 ### Population Structure Analysis (STR vs SNP)
 
 This provides a direct comparison of population structure resolution between STRs and SNPs.
@@ -92,8 +89,6 @@ Features:
 - hierarchical clustering of genetic distance matrices (STRs and SNPs)
 - comparison of STR/SNP distances to geographic distances using Mantel tests
 
----
-
 ### Supervised Population Assignment (STR vs SNP)
 
 Two classifiers are implemented:
@@ -102,9 +97,8 @@ Two classifiers are implemented:
 
 Outputs include accuracy metrics at both continental and regional levels for STRs and SNPs.
 
----
 
-## Directional NMF for STR-based Admixture Inference
+### Directional NMF for STR-based Admixture Inference
 
 Directional NMF (dNMF) decomposes standardized STR data into:
 - expansion-associated signals (`X_pos`)
@@ -128,11 +122,14 @@ Using dNMF, we detected:
   <img src="figures/res_dnmf.jpg">
 </p>
 
----
 
-## Ancestry-informative STR Signatures
+### Ancestry-informative STR Signatures Analysis
 
-These signatures highlight STR motif and genomic distributions enriched in specific ancestral components.
+- Identify top STRloci per direction per component 
+- Define direction-specific STR signatures
+- Perform enrichment tests for:
+  - STR motif lengths
+  - Genomic regions
 
 
 ## 3. Notebooks
