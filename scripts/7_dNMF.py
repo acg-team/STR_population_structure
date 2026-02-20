@@ -7,12 +7,7 @@ from sklearn.impute import SimpleImputer
 from sklearn.preprocessing import StandardScaler
 import argparse
 
-#Example Slurm array (pseudo):
-# #SBATCH --array=0-9
-
-# REPEAT_ID=${SLURM_ARRAY_TASK_ID}
-
-# python nmf_cv.py \
+# python dNMF.py \
 #   -f data/str_matrix.tsv \
 #   --str-info-file data/str_info.tsv \
 #   --period 3 \
@@ -59,6 +54,7 @@ def cross_validate_nmf(
     n_repeats=1,
     matching=0.9,
     random_state=42,
+    output_path=None
 ):
     """
     Run NMF on pos/neg matrices for K in [3, max_k).
@@ -85,7 +81,7 @@ def cross_validate_nmf(
 
             model_pos = NMF(
                 n_components=K,
-                init="nndsvda",
+                init="nndsvd",
                 solver="cd",
                 max_iter=10000,
                 random_state=rs,
@@ -94,7 +90,7 @@ def cross_validate_nmf(
 
             model_neg = NMF(
                 n_components=K,
-                init="nndsvda",
+                init="nndsvd",
                 solver="cd",
                 max_iter=10000,
                 random_state=rs,
@@ -116,8 +112,15 @@ def cross_validate_nmf(
                 "pos_err": float(model_pos.reconstruction_err_),
                 "neg_err": float(model_neg.reconstruction_err_),
             }
+            
+        df_out = pd.DataFrame(avecorr_per_k).T  # K as index
+        df_out.index.name = "K"
 
-    return avecorr_per_k
+        out_path = output_path + f"_rep{repeat}.csv"
+        df_out.to_csv(out_path)
+        print(f"Saved NMF results for repeat {repeat} to: {out_path}")
+
+    #return avecorr_per_k
 
 
 def split_df(str_file, str_info_file=None, period=None):
@@ -165,8 +168,6 @@ def split_df(str_file, str_info_file=None, period=None):
 
 def main():
     args = parse_cla()
-
-    # each Slurm job: one repeat index, becomes part of the seed
     seed = 10 + args.nrepeats
     print(f"Using random_state={seed} for this job (repeat index {args.nrepeats})")
 
@@ -180,16 +181,17 @@ def main():
         pos_matrix=X_pos,
         neg_matrix=X_neg,
         max_k=args.max_k,
-        n_repeats=1,          # one repeat per Slurm job
+        n_repeats=5,          # number of runs per K
         random_state=seed,
+        output_path= args.output_path
     )
 
-    df_out = pd.DataFrame(res).T  # K as index
-    df_out.index.name = "K"
+    # df_out = pd.DataFrame(res).T  # K as index
+    # df_out.index.name = "K"
 
-    out_path = args.output_path + f"_rep{args.nrepeats}.csv"
-    df_out.to_csv(out_path)
-    print(f"Saved NMF results for repeat {args.nrepeats} to: {out_path}")
+    # out_path = args.output_path + f"_rep{args.nrepeats}.csv"
+    # df_out.to_csv(out_path)
+    # print(f"Saved NMF results for repeat {args.nrepeats} to: {out_path}")
 
 
 if __name__ == "__main__":
