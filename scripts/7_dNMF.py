@@ -58,8 +58,6 @@ def cross_validate_nmf(
 ):
     """
     Run NMF on pos/neg matrices for K in [3, max_k).
-    In your Slurm setup you typically call this with n_repeats=1
-    and change random_state between jobs.
 
     Returns
     -------
