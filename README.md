@@ -27,7 +27,7 @@ STR genotyping VCF for 1KGP and H3Africa are obtained from:
 STR genotypes of HGDP and SGDP are generated using HipSTR:
 
 - **HipSTR**:  
-*links to be added*
+Per-chromosome VCF files can be downloaded here: https://zenodo.org/records/19557333 
 
 
 ### Sample metadata
