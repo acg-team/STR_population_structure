@@ -139,3 +139,8 @@ pip install numpy pandas scipy scikit-learn statsmodels pyranges
 ```
 
 ## 5. Citation
+```
+High-resolution population structure inference using genome-wide short tandem repeat variations
+Feifei Xia, Michael Baudis, Maria Anisimova
+bioRxiv 2026.02.20.707006; doi: https://doi.org/10.64898/2026.02.20.707006
+```
