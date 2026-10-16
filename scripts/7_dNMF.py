@@ -11,9 +11,10 @@ import argparse
 #   -f data/str_matrix.tsv \
 #   --str-info-file data/str_info.tsv \
 #   --period 3 \
-#   -r ${REPEAT_ID} \
 #   -o results/nmf_period3 \
-#   -k 20
+#   -k 20 \
+#   --n-runs 5 \
+#   --seed 42
 
 
 def parse_cla():
@@ -25,16 +26,20 @@ def parse_cla():
         help="Path to STR genotype matrix (rows = STRs, cols = samples)."
     )
     parser.add_argument(
-        "-r", "--nrepeats", type=int, required=True,
-        help="Repeat index (used to set the random seed, usually from Slurm array index)."
-    )
-    parser.add_argument(
         "-o", "--output-path", type=str, required=True,
         help="Output prefix (CSV will be written)."
     )
     parser.add_argument(
+        "--n-runs", type=int, default=5,
+        help="Number of repeated NMF runs per K."
+    )
+    parser.add_argument(
+        "--seed", type=int, default=42,
+        help="Random seed for repeated NMF runs."
+    )
+    parser.add_argument(
         "-k", "--max-k", type=int, default=20,
-        help="Maximum K (components) to test (range starts at 3)."
+        help="Maximum K (components) to test, inclusive (range starts at 3)."
     )
     parser.add_argument(
         "--str-info-file", type=str, default=None,
@@ -57,18 +62,17 @@ def cross_validate_nmf(
     output_path=None
 ):
     """
-    Run NMF on pos/neg matrices for K in [3, max_k).
+    Run NMF on pos/neg matrices for K in [3, max_k].
 
     Returns
     -------
-    avecorr_per_k : dict
-        K -> {"avercorr", "varcorr", "match", "pos_err", "neg_err"}
-        For your use, this is just a single repeat per K.
+    df_out : pandas.DataFrame
+        Combined NMF results with one row per repeat and K.
     """
 
-    K_range = range(3, max_k)
+    K_range = range(3, max_k + 1)
     rng = np.random.default_rng(random_state)
-    avecorr_per_k = {k: {} for k in K_range}
+    results = []
 
     for repeat in range(n_repeats):
         rs = rng.integers(0, 1_000_000)
@@ -99,26 +103,27 @@ def cross_validate_nmf(
             Q_neg /= Q_neg.sum(axis=1, keepdims=True)
 
             corr_matrix = np.corrcoef(Q_pos.T, Q_neg.T)[:K, K:]
-            cost_matrix = -np.abs(corr_matrix)
+            #cost_matrix = -np.abs(corr_matrix)
+            cost_matrix = -corr_matrix
             row_ind, col_ind = linear_sum_assignment(cost_matrix)
             total_corr = corr_matrix[row_ind, col_ind]
 
-            avecorr_per_k[K] = {
+            results.append({
+                "repN": repeat + 1,
+                "K": K,
                 "avercorr": total_corr.mean(),
                 "varcorr": total_corr.var(),
                 "match": int(np.sum(np.abs(total_corr) > matching)),
                 "pos_err": float(model_pos.reconstruction_err_),
                 "neg_err": float(model_neg.reconstruction_err_),
-            }
-            
-        df_out = pd.DataFrame(avecorr_per_k).T  # K as index
-        df_out.index.name = "K"
+            })
 
-        out_path = output_path + f"_rep{repeat}.csv"
-        df_out.to_csv(out_path)
-        print(f"Saved NMF results for repeat {repeat} to: {out_path}")
+    df_out = pd.DataFrame(results)
+    out_path = output_path if output_path.endswith(".csv") else output_path + ".csv"
+    df_out.to_csv(out_path, index=False)
+    print(f"Saved combined NMF results to: {out_path}")
 
-    #return avecorr_per_k
+    return df_out
 
 
 def split_df(str_file, str_info_file=None, period=None):
@@ -130,10 +135,10 @@ def split_df(str_file, str_info_file=None, period=None):
       X_pos, X_neg (both samples x STRs)
     """
     # rows = STRs, cols = samples
-    str_data = pd.read_csv(str_file, index_col=0, low_memory=False)
+    str_data = pd.read_csv(str_file, sep="\t", index_col=0, low_memory=False)
 
     if str_info_file is not None:
-        str_info = pd.read_csv(str_info_file).query("str_var > 2").copy()
+        str_info = pd.read_csv(str_info_file, sep="\t").query("str_var > 2").copy()
 
         # keep only HipSTR calls (3rd field in 'methods' == 1)
         hipstr = np.array([int(i.split("|")[2]) for i in str_info["methods"]])
@@ -153,11 +158,10 @@ def split_df(str_file, str_info_file=None, period=None):
         input_data = str_data
 
     # input_data: STRs x samples -> transpose to samples x STRs
-    imputed = SimpleImputer(missing_values=np.nan, strategy="mean").fit_transform(
-        input_data.T
-    )
-    X_data = StandardScaler().fit_transform(imputed)
-
+    #imputed = SimpleImputer(missing_values=np.nan, strategy="mean").fit_transform(
+    #    input_data.T)
+    #X_data = StandardScaler().fit_transform(imputed)
+    X_data = input_data.T.values
     X_pos = np.clip(X_data, a_min=0, a_max=None)
     X_neg = np.clip(-X_data, a_min=0, a_max=None)
 
@@ -166,8 +170,7 @@ def split_df(str_file, str_info_file=None, period=None):
 
 def main():
     args = parse_cla()
-    seed = 10 + args.nrepeats
-    print(f"Using random_state={seed} for this job (repeat index {args.nrepeats})")
+    print(f"Using random_state={args.seed}")
 
     X_pos, X_neg = split_df(
         args.file_path,
@@ -179,17 +182,10 @@ def main():
         pos_matrix=X_pos,
         neg_matrix=X_neg,
         max_k=args.max_k,
-        n_repeats=5,          # number of runs per K
-        random_state=seed,
-        output_path= args.output_path
+        n_repeats=args.n_runs,
+        random_state=args.seed,
+        output_path=args.output_path
     )
-
-    # df_out = pd.DataFrame(res).T  # K as index
-    # df_out.index.name = "K"
-
-    # out_path = args.output_path + f"_rep{args.nrepeats}.csv"
-    # df_out.to_csv(out_path)
-    # print(f"Saved NMF results for repeat {args.nrepeats} to: {out_path}")
 
 
 if __name__ == "__main__":

@@ -3,7 +3,7 @@
 This repository contains comprehensive analyses for genome-wide Short Tandem Repeat (STR) variations in human populations. 
 
 <p align="center">
-  <img src="figures/overview.jpg">
+  <img src="figures/overview_update.jpg">
 </p>
 
 The pipeline was applied to the following datasets:
